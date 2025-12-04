@@ -1,0 +1,30 @@
+# 1. Active Service (Stable Traffic)
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice-stable # Name used by Argo Rollouts for the stable version
+  labels:
+    app: myservice
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+  selector:
+    app: myservice # Selector will be managed by Argo Rollouts
+
+---
+# 2. Preview Service (Canary Traffic)
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice-canary # Name used by Argo Rollouts for the canary version
+  labels:
+    app: myservice
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+  selector:
+    app: myservice # Selector will be managed by Argo Rollouts

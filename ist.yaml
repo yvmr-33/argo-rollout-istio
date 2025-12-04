@@ -1,0 +1,77 @@
+
+# # 1. Istio Gateway: Binds to the istio-ingressgateway LoadBalancer
+# apiVersion: networking.istio.io/v1
+# kind: Gateway
+# metadata:
+#   name: myservice-gateway
+# spec:
+#   selector:
+#     istio: ingressgateway # Selects the istio-ingressgateway Service Pods
+#   servers:
+#   - port:
+#       number: 80
+#       name: http
+#       protocol: HTTP
+#     hosts:
+#     - "*" # Allows traffic for any hostname (simplest setup)
+# ---
+# # 2. Virtual Service: Attaches the routing rules to the new Gateway
+# apiVersion: networking.istio.io/v1
+# kind: VirtualService
+# metadata:
+#   name: myservice-vs
+# spec:
+#   # Reference the new Gateway here
+#   gateways:
+#   - myservice-gateway
+#   # And continue to route based on the Kubernetes Service name
+#   hosts:
+#   - "*" # Route traffic for any incoming hostname (or specify a DNS like 'myservice.com')
+#   http:
+#   - route:
+#     - destination:
+#         host: myservice
+#         subset: v1
+#       weight: 50
+#     - destination:
+#         host: myservice
+#         subset: v2
+#       weight: 50
+
+
+
+
+# 3. Istio Destination Rule (Define Subsets)
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: myservice-dr
+spec:
+  host: myservice-stable # Reference the stable Service name
+  subsets:
+  - name: stable
+    labels:
+      app: myservice
+  - name: canary
+    labels:
+      app: myservice
+---
+# 4. Istio Virtual Service (Enforce 50/50 Split)
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: myservice-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - myservice-gateway
+  http:
+  - name: http # <--- ADD THIS LINE to explicitly name the route
+    route:
+    - destination:
+        host: myservice-stable
+      weight: 100
+    - destination:
+        host: myservice-canary
+      weight: 0
